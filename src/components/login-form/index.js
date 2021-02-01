@@ -1,10 +1,7 @@
-import './index.css';
+import './index.scss';
 import Input from '../input'
 import React from 'react';
-const SUBMIT_TYPE = {
-    sync: 0,//同步
-    async: 1 //异步
-}
+import { SUBMIT_TYPE } from "../../utils/enum";
 class LoginForm extends React.Component {
     constructor(props) {
         super(props)
@@ -12,20 +9,21 @@ class LoginForm extends React.Component {
             username: '',
             password: '',
             submitted: false,
-            submitType: SUBMIT_TYPE.async,
+            submitType: props.submitType,
             usernameMsg: '',
-            passwordMsg: '',
-            msg: '',
+            passwordMsg: ''
         }
     }
 
     render() {
         return (
-            <form className="login-form" ref={(form) => { this.form = form }}>
+            <form className="login-form" ref={(form) => { this.form = form }} action={this.props.action}>
                 <h2>单点登录</h2>
-                <div className="msg">
-                    <p></p>
-                </div>
+                {   this.props.errorMessage &&
+                    <div className="msg">
+                        <p>{this.props.errorMessage}</p>
+                    </div>
+                }
                 <Input placeholder="用户名" message={this.state.usernameMsg} value={this.state.username} change={ev => this.updateState('username', ev)} name='username' />
                 <Input placeholder="密码" type="password" message={this.state.passwordMsg} value={this.state.password} change={ev => this.updateState('password', ev)} name='password' />
                 <button className="btn-submit" type='button' onClick={ev => this.submit(ev)} disabled={this.state.submitted}>{this.state.submitted ? '正在登录...' : '登 录'}</button>
@@ -63,11 +61,11 @@ class LoginForm extends React.Component {
     async submit(ev) {
         const valid = await this.validate()
         if (valid) {
+            console.log('登陆...')
+            this.setState({
+                submitted: true
+            })
             if (this.state.submitType === SUBMIT_TYPE.async) {
-                console.log('登陆...')
-                this.setState({
-                    submitted: true
-                })
                 this.login()
             } else {
                 console.log(this.form)
@@ -75,10 +73,15 @@ class LoginForm extends React.Component {
             }
         }
     }
-    login() {
-        setTimeout(() => {
-            this.props.history.push('/home')
-        }, 1000)
+    async login() {
+        if (typeof this.props.login === 'function') {
+            const { username, password, submitType } = this.state
+            this.props.login({
+                username,
+                password,
+                submitType
+            })
+        }
     }
 
 }
